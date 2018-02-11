@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts;
 using UnityEngine;
@@ -15,10 +16,11 @@ public class GameManager : MonoBehaviour
     private Color _yellow;
     private Color _gridColor;
 
-    private GameObject[,] _board;
+    private Tile[,] _board;
 
     private Color _activeColor;
     private GameObject _activeCoin;
+    private Tile _activeTile;
 
     private GameObject _grid;
 
@@ -132,6 +134,8 @@ public class GameManager : MonoBehaviour
 
                 if (_gameOver)
                 {
+                    yield return new WaitForSeconds(5);
+
                     SceneManager.LoadScene(0);
                 }
                 else
@@ -166,7 +170,7 @@ public class GameManager : MonoBehaviour
             Destroy(_activeCoin);
         }
 
-        _board = new GameObject[6, 7];
+        _board = new Tile[6, 7];
 
         var grid = Instantiate(Grid, GameContainer);
         _grid = grid.gameObject;
@@ -182,12 +186,9 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            var indexString = childGameObject.name.Substring(4);
+            var tile = childGameObject.GetComponent<Tile>();
 
-            var row = int.Parse(indexString.Substring(0, 1));
-            var col = int.Parse(indexString.Substring(1));
-
-            _board[row, col] = childGameObject;
+            _board[tile.Row, tile.Col] = tile;
         }
 
         _inGameUi.gameObject.SetActive(true);
@@ -238,6 +239,8 @@ public class GameManager : MonoBehaviour
         
         if (closestCollider != null)
         {
+            // Change colour of the tile
+
             var colisionObjectRender = closestCollider.gameObject.GetComponent<SpriteRenderer>();
 
             if (!colisionObjectRender.color.Equals(_activeColor))
@@ -262,6 +265,11 @@ public class GameManager : MonoBehaviour
                 //a.AddClip(clip, "test");
                 a.Play();
             }
+
+            // Remember the change
+            var tile = closestCollider.GetComponent<Tile>();
+            _board[tile.Row, tile.Col].PlayerMarker = PlayerMarker;
+            _activeTile = tile;
         }
 
         _activeCoin.GetComponent<Animation>().Play("Shrink");
@@ -275,8 +283,24 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator CheckForWin()
     {
-        if (false)
+        if (_activeTile == null)
         {
+            yield break;
+        }
+
+        IEnumerable<Tile> winningTiles;
+
+        if (WinLogic.CheckWin(_board, _activeTile, out winningTiles))
+        {
+            // Do something with winning tiles. Highlight them or something
+            foreach (var tile in winningTiles)
+            {
+                tile.GetComponent<SpriteRenderer>().color = Color.white;
+            }
+
+            var winnerText = _inGameUi.Find("WinnerText").GetComponent<Text>();
+            winnerText.text = string.Format("<color=#{0}>WINNER</color>", _activeColor == _red ? ColorUtility.ToHtmlStringRGBA(_red) : ColorUtility.ToHtmlStringRGBA(_yellow));
+
             _gameOver = true;
         }
 
@@ -287,6 +311,7 @@ public class GameManager : MonoBehaviour
     {
         _activeColor = _activeColor == _red ? _yellow : _red;
         _activeCoin = null;
+        _activeTile = null;
 
         yield return null;
     }
@@ -299,5 +324,10 @@ public class GameManager : MonoBehaviour
     public void Quit()
     {
         Application.Quit();
+    }
+
+    public int PlayerMarker
+    {
+        get { return _activeColor == _red ? 1 : 2; }
     }
 }

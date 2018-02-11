@@ -7,14 +7,11 @@ namespace Assets.Scripts
     public class CoinMovementManager : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         private float _startDragTime;
-        private float _endDragTime;
-
         private Vector2 _startPosition;
-        private Vector2 _endPosition;
 
         private bool _moving;
 
-        public bool Completed = false;
+        public bool Completed;
 
         void Update()
         {
@@ -43,16 +40,17 @@ namespace Assets.Scripts
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (_moving)
+            {
+                return;
+            }
+
             var distance = Vector2.Distance(_startPosition, eventData.position);
 
             // Allow for a little movement if the player is holding the coin before flicking
             if (distance < 25)
             {
                 _startDragTime = Time.time;
-            }
-            else
-            {
-                Debug.Log("Far enough");
             }
         }
 
@@ -63,13 +61,12 @@ namespace Assets.Scripts
                 return;
             }
 
-            _endDragTime = Time.time;
-            _endPosition = eventData.position;
+            var endDragTime = Time.time;
+            var endPosition = eventData.position;
 
+            var duration = endDragTime - _startDragTime;
 
-            var duration = _endDragTime - _startDragTime;
-
-            var direction = _endPosition - _startPosition;
+            var direction = endPosition - _startPosition;
 
             var distance = direction.magnitude;
 
@@ -77,13 +74,7 @@ namespace Assets.Scripts
 
             power = Mathf.Clamp(power, 0f, 0.015f);
 
-
             var rb = eventData.pointerDrag.GetComponent<Rigidbody2D>();
-
-            //var v2 = _endPosition - _startPosition;
-            //var relativev2 = v2 / (float) ((_endDragTime - _startDragTime).TotalMilliseconds * 0.005f);
-            
-            //rb.velocity = relativev2 * 0.05f;
 
             rb.velocity = direction * power;
 

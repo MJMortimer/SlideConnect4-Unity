@@ -2,37 +2,69 @@
 using System.Linq;
 using Assets.Scripts;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    private bool _initialised;
+
     private Color _red;
     private Color _yellow;
-    
+    private Color _gridColor;
+
     private GameObject[,] _board;
 
     private Color _activeColor;
     private GameObject _activeCoin;
 
-    // Coin prefab
+    public Text Text;
+
+    // Prefabs
     public Transform Coin;
+    public Transform Grid;
 
     private bool _gameOver = false;
 
     // Use this for initialization
 	void Start ()
 	{
-	    InititialiseBoard();
-
-	    InitialiseColours();
+        StartCoroutine(Initialise());
 
 	    StartCoroutine(GameLoop());
 	}
 
-    private void InititialiseBoard()
+    private IEnumerator Initialise()
+    {
+        yield return StartCoroutine(InitialiseColours());
+
+        yield return StartCoroutine(Splash());
+        
+        yield return StartCoroutine(InititialiseBoard());
+        
+        _initialised = true;
+
+        yield return null;
+    }
+
+    private IEnumerator Splash()
+    {
+        Text.text = string.Format("<color=#{0}>SLIDE</color>\n<color=#{1}>AND</color>\n<color=#{2}>CONNECT</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
+
+        yield return new WaitForSeconds(3);
+
+        Text.text = string.Empty;
+
+        yield return null;
+    }
+
+    private IEnumerator InititialiseBoard()
     {
         _board = new GameObject[6, 7];
-        var grid = GameObject.Find("grid");
+
+        var grid = Instantiate(Grid);
+        grid.GetComponent<SpriteRenderer>().color = _gridColor;
 
         foreach (Transform child in grid.transform)
         {
@@ -50,37 +82,51 @@ public class GameManager : MonoBehaviour
 
             _board[row, col] = childGameObject;
         }
+
+        yield return null;
     }
 
-    private void InitialiseColours()
+    private IEnumerator InitialiseColours()
     {
         ColorUtility.TryParseHtmlString("#E88989FF", out _red);
         ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
+        ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
 
         // Red always starts
         _activeColor = _red;
+
+        yield return null;
     }
 
     private IEnumerator GameLoop()
     {
-        // Create a coin
-        yield return StartCoroutine(InitialiseCoin());
-
-        // Wait for coin to say that it's taken it's turn (user slides it)
-        yield return StartCoroutine(WaitForTurnTaken());
-
-        yield return StartCoroutine(FinishTurn());
-
-        yield return StartCoroutine(CheckForWin());
-
-        yield return StartCoroutine(PrepareNextTurn());
-
-        if (_gameOver)
+        if (_initialised)
         {
-            SceneManager.LoadScene(0);
+            // Create a coin
+            yield return StartCoroutine(InitialiseCoin());
+
+            // Wait for coin to say that it's taken it's turn (user slides it)
+            yield return StartCoroutine(WaitForTurnTaken());
+
+            yield return StartCoroutine(FinishTurn());
+
+            yield return StartCoroutine(CheckForWin());
+
+            yield return StartCoroutine(PrepareNextTurn());
+
+            if (_gameOver)
+            {
+                SceneManager.LoadScene(0);
+            }
+            else
+            {
+                StartCoroutine(GameLoop());
+            }
         }
         else
         {
+            yield return new WaitForSeconds(0.25f);
+
             StartCoroutine(GameLoop());
         }
     }
@@ -89,6 +135,7 @@ public class GameManager : MonoBehaviour
     {
         _activeCoin = Instantiate(Coin).gameObject;
         _activeCoin.GetComponent<SpriteRenderer>().color = _activeColor;
+        _activeCoin.GetComponent<SpriteRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
         yield return null;
     }

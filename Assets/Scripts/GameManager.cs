@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     private bool _initialised;
+    private bool _requiresReset;
 
     private Color _red;
     private Color _yellow;
@@ -19,13 +20,23 @@ public class GameManager : MonoBehaviour
     private Color _activeColor;
     private GameObject _activeCoin;
 
-    public Text Text;
+    private GameObject _grid;
+
+    public Transform GameContainer;
+
+    // UI components
+    public Canvas Canvas; // Set in inspector
+
+    private Transform _splashScreenUi;
+    private Transform _inGameUi;
+    private Transform _menuUi;
 
     // Prefabs
-    public Transform Coin;
-    public Transform Grid;
+    public Transform Coin; // Set in inspector
+    public Transform Grid; // Set in inspector
 
-    private bool _gameOver = false;
+    private bool _gameOver;
+    
 
     // Use this for initialization
 	void Start ()
@@ -37,52 +48,45 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator Initialise()
     {
+        yield return StartCoroutine(FetchUiComponents());
+
         yield return StartCoroutine(InitialiseColours());
 
         yield return StartCoroutine(Splash());
-        
-        yield return StartCoroutine(InititialiseBoard());
-        
+
+        _requiresReset = true;
+
         _initialised = true;
+
+        yield return null;
+    }
+
+    private IEnumerator FetchUiComponents()
+    {
+        _splashScreenUi = Canvas.transform.Find("SplashScreenUI");
+        _inGameUi = Canvas.transform.Find("InGameUI");
+        _menuUi = Canvas.transform.Find("MenuUI");
+
+        _splashScreenUi.gameObject.SetActive(false);
+        _inGameUi.gameObject.SetActive(false);
+        _menuUi.gameObject.SetActive(false);
 
         yield return null;
     }
 
     private IEnumerator Splash()
     {
-        Text.text = string.Format("<color=#{0}>SLIDE</color>\n<color=#{1}>AND</color>\n<color=#{2}>CONNECT</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
+        var splashScreenTextTransform = _splashScreenUi.Find("SplashScreenText");
+
+        var text = splashScreenTextTransform.GetComponent<Text>();
+
+        text.text = string.Format("<color=#{0}>SLIDE</color>\n<color=#{1}>AND</color>\n<color=#{2}>CONNECT</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
+        _splashScreenUi.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(3);
 
-        Text.text = string.Empty;
-
-        yield return null;
-    }
-
-    private IEnumerator InititialiseBoard()
-    {
-        _board = new GameObject[6, 7];
-
-        var grid = Instantiate(Grid);
-        grid.GetComponent<SpriteRenderer>().color = _gridColor;
-
-        foreach (Transform child in grid.transform)
-        {
-            var childGameObject = child.gameObject;
-
-            if (!childGameObject.name.StartsWith("tile"))
-            {
-                continue;
-            }
-
-            var indexString = childGameObject.name.Substring(4);
-
-            var row = int.Parse(indexString.Substring(0, 1));
-            var col = int.Parse(indexString.Substring(1));
-
-            _board[row, col] = childGameObject;
-        }
-
+        text.text = string.Empty;
+        _splashScreenUi.gameObject.SetActive(false);
         yield return null;
     }
 
@@ -102,38 +106,98 @@ public class GameManager : MonoBehaviour
     {
         if (_initialised)
         {
+            if (_requiresReset)
+            {
+                yield return StartCoroutine(InititialiseBoard());
+                _requiresReset = false;
+                yield return null;
+            }
+
             // Create a coin
-            yield return StartCoroutine(InitialiseCoin());
+            if (_activeCoin == null)
+            {
+                yield return StartCoroutine(InitialiseCoin());
+            }
 
             // Wait for coin to say that it's taken it's turn (user slides it)
-            yield return StartCoroutine(WaitForTurnTaken());
+            //yield return StartCoroutine(WaitForTurnTaken());
 
-            yield return StartCoroutine(FinishTurn());
-
-            yield return StartCoroutine(CheckForWin());
-
-            yield return StartCoroutine(PrepareNextTurn());
-
-            if (_gameOver)
+            if (_activeCoin.GetComponent<CoinMovementManager>().Completed)
             {
-                SceneManager.LoadScene(0);
+                yield return StartCoroutine(FinishTurn());
+
+                yield return StartCoroutine(CheckForWin());
+
+                yield return StartCoroutine(PrepareNextTurn());
+
+                if (_gameOver)
+                {
+                    SceneManager.LoadScene(0);
+                }
+                else
+                {
+                    StartCoroutine(GameLoop());
+                }
             }
             else
             {
+                yield return new WaitForSeconds(0.5f);
                 StartCoroutine(GameLoop());
             }
         }
         else
         {
-            yield return new WaitForSeconds(0.25f);
+            yield return new WaitForSeconds(0.5f);
 
             StartCoroutine(GameLoop());
         }
     }
 
+    private IEnumerator InititialiseBoard()
+    {
+        // Destroy previous in play objects
+        if (_grid != null)
+        {
+            Destroy(_grid);
+        }
+
+        if (_activeCoin != null)
+        {
+            Destroy(_activeCoin);
+        }
+
+        _board = new GameObject[6, 7];
+
+        var grid = Instantiate(Grid, GameContainer);
+        _grid = grid.gameObject;
+
+        grid.GetComponent<SpriteRenderer>().color = _gridColor;
+
+        foreach (Transform child in grid.transform)
+        {
+            var childGameObject = child.gameObject;
+
+            if (!childGameObject.name.StartsWith("tile"))
+            {
+                continue;
+            }
+
+            var indexString = childGameObject.name.Substring(4);
+
+            var row = int.Parse(indexString.Substring(0, 1));
+            var col = int.Parse(indexString.Substring(1));
+
+            _board[row, col] = childGameObject;
+        }
+
+        _inGameUi.gameObject.SetActive(true);
+
+        yield return null;
+    }
+
     private IEnumerator InitialiseCoin()
     {
-        _activeCoin = Instantiate(Coin).gameObject;
+        _activeCoin = Instantiate(Coin, GameContainer).gameObject;
         _activeCoin.GetComponent<SpriteRenderer>().color = _activeColor;
         _activeCoin.GetComponent<SpriteRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
@@ -202,7 +266,13 @@ public class GameManager : MonoBehaviour
     private IEnumerator PrepareNextTurn()
     {
         _activeColor = _activeColor == _red ? _yellow : _red;
+        _activeCoin = null;
 
         yield return null;
+    }
+
+    public void Restart()
+    {
+        _requiresReset = true;
     }
 }

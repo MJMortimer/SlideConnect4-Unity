@@ -201,17 +201,9 @@ public class GameManager : MonoBehaviour
         _activeCoin.GetComponent<SpriteRenderer>().color = _activeColor;
         _activeCoin.GetComponent<SpriteRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
-        _activeCoin.GetComponent<Animation>().Play();
+        _activeCoin.GetComponent<Animation>().Play("SlideCoinToReadyPoint");
         
         yield return null;
-    }
-
-    private IEnumerator WaitForTurnTaken()
-    {
-        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed)
-        {
-            yield return null;
-        }
     }
 
     private IEnumerator FinishTurn()
@@ -243,16 +235,42 @@ public class GameManager : MonoBehaviour
                 closestDistance = distance;
             }
         }
-
-
+        
         if (closestCollider != null)
         {
-            closestCollider.gameObject.GetComponent<SpriteRenderer>().color = _activeColor;
+            var colisionObjectRender = closestCollider.gameObject.GetComponent<SpriteRenderer>();
+
+            if (!colisionObjectRender.color.Equals(_activeColor))
+            {
+                //Alter the animation curve so that we fade from the color it is the color we want
+                var a = closestCollider.GetComponent<Animation>();
+                var existingClipLength = a.clip.length;
+
+                var rCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.r, existingClipLength, _activeColor.r);
+                var gCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.g, existingClipLength, _activeColor.g);
+                var bCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.b, existingClipLength, _activeColor.b);
+                var aCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.a, existingClipLength, _activeColor.a);
+
+                //AnimationClip clip = new AnimationClip();
+                a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.r", rCurve);
+                a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.g", gCurve);
+                a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.b", bCurve);
+                a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.a", aCurve);
+
+                //a.RemoveClip("FadeIn");
+
+                //a.AddClip(clip, "test");
+                a.Play();
+            }
         }
+
+        _activeCoin.GetComponent<Animation>().Play("Shrink");
+
+        yield return new WaitForSeconds(1.5f);
 
         Destroy(_activeCoin);
 
-        yield return new WaitForSeconds(1.5f);
+        yield return null;
     }
 
     private IEnumerator CheckForWin()
@@ -276,5 +294,10 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         _requiresReset = true;
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 }

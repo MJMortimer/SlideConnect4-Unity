@@ -122,8 +122,6 @@ public class GameManager : MonoBehaviour
             }
 
             // Wait for coin to say that it's taken it's turn (user slides it)
-            //yield return StartCoroutine(WaitForTurnTaken());
-
             if (_activeCoin.GetComponent<CoinMovementManager>().Completed)
             {
                 yield return StartCoroutine(FinishTurn());
@@ -274,7 +272,7 @@ public class GameManager : MonoBehaviour
 
         _activeCoin.GetComponent<Animation>().Play("Shrink");
 
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(0.25f);
 
         Destroy(_activeCoin);
 

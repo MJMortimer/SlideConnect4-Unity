@@ -185,36 +185,6 @@ namespace Assets.Scripts
                 }
             }
 
-
-
-
-
-
-
-
-
-
-
-            var smallestIndex = Math.Min(beginIndexRow, beginIndexCol);
-
-            // Loop from the earliest index up to the tiles actual index checking the runs of 4
-            for (var i = smallestIndex; i <= changedTile.Col && i + 3 < grid.GetLength(1) && i + 3 < grid.GetLength(0); i++)
-            {
-                // Check the 4 markers against what we expect
-                if (grid[i, i].PlayerMarker == expectedMarker && grid[i + 1, i + 1].PlayerMarker == expectedMarker && grid[i + 2, i + 2].PlayerMarker == expectedMarker && grid[i + 3, i + 3].PlayerMarker == expectedMarker)
-                {
-                    winningTiles = new[]
-                    {
-                        grid[i, i],
-                        grid[i + 1, i + 1],
-                        grid[i + 2, i + 2],
-                        grid[i + 3, i + 3]
-                    };
-
-                    return true;
-                }
-            }
-
             winningTiles = null;
             return false;
         }

@@ -50,20 +50,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator Initialise()
     {
-        yield return StartCoroutine(FetchUiComponents());
+        FetchUiComponents();
 
-        yield return StartCoroutine(InitialiseColours());
+        InitialiseColours();
 
         yield return StartCoroutine(Splash());
-
-        _requiresReset = true;
-
-        _initialised = true;
-
-        yield return null;
+        
     }
 
-    private IEnumerator FetchUiComponents()
+    private void FetchUiComponents()
     {
         _splashScreenUi = Canvas.transform.Find("SplashScreenUI");
         _inGameUi = Canvas.transform.Find("InGameUI");
@@ -72,8 +67,16 @@ public class GameManager : MonoBehaviour
         _splashScreenUi.gameObject.SetActive(false);
         _inGameUi.gameObject.SetActive(false);
         _menuUi.gameObject.SetActive(false);
+    }
 
-        yield return null;
+    private void InitialiseColours()
+    {
+        ColorUtility.TryParseHtmlString("#E88989FF", out _red);
+        ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
+        ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
+
+        // Red always starts
+        _activeColor = _red;
     }
 
     private IEnumerator Splash()
@@ -82,80 +85,61 @@ public class GameManager : MonoBehaviour
 
         var text = splashScreenTextTransform.GetComponent<Text>();
 
-        text.text = string.Format("<color=#{0}>SLIDE</color>\n<color=#{1}>AND</color>\n<color=#{2}>CONNECT</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
+        text.text = string.Format("<color=#{0}>FL</color><color=#{1}>I</color><color=#{2}>CK</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
         _splashScreenUi.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(3);
 
         text.text = string.Empty;
         _splashScreenUi.gameObject.SetActive(false);
-        yield return null;
-    }
 
-    private IEnumerator InitialiseColours()
-    {
-        ColorUtility.TryParseHtmlString("#E88989FF", out _red);
-        ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
-        ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
+        _requiresReset = true;
 
-        // Red always starts
-        _activeColor = _red;
-
-        yield return null;
+        _initialised = true;
     }
 
     private IEnumerator GameLoop()
     {
-        if (_initialised)
+        while (!_initialised)
         {
-            if (_requiresReset)
-            {
-                yield return StartCoroutine(InititialiseBoard());
-                _requiresReset = false;
-                yield return null;
-            }
+            yield return null;
+        }
 
-            // Create a coin
-            if (_activeCoin == null)
-            {
-                yield return StartCoroutine(InitialiseCoin());
-            }
+        if (_requiresReset)
+        {
+            InititialiseBoard();
+            _requiresReset = false;
+        }
 
-            // Wait for coin to say that it's taken it's turn (user slides it)
-            if (_activeCoin.GetComponent<CoinMovementManager>().Completed)
-            {
-                yield return StartCoroutine(FinishTurn());
+        // Create a coin
+        if (_activeCoin == null)
+        {
+            InitialiseCoin();
+        }
 
-                yield return StartCoroutine(CheckForWin());
+        // Wait for coin to say that it's taken it's turn (user slides it)
+        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed)
+        {
+            yield return null;
+        }
 
-                yield return StartCoroutine(PrepareNextTurn());
+        yield return StartCoroutine(FinishTurn());
 
-                if (_gameOver)
-                {
-                    yield return new WaitForSeconds(5);
+        CheckForWin();
 
-                    SceneManager.LoadScene(0);
-                }
-                else
-                {
-                    StartCoroutine(GameLoop());
-                }
-            }
-            else
-            {
-                yield return new WaitForSeconds(0.5f);
-                StartCoroutine(GameLoop());
-            }
+        if (_gameOver)
+        {
+            yield return new WaitForSeconds(5);
+            SceneManager.LoadScene(0);
         }
         else
         {
-            yield return new WaitForSeconds(0.5f);
-
+            PrepareNextTurn();
             StartCoroutine(GameLoop());
         }
     }
 
-    private IEnumerator InititialiseBoard()
+    private void InititialiseBoard()
     {
         // Destroy previous in play objects
         if (_grid != null)
@@ -190,19 +174,15 @@ public class GameManager : MonoBehaviour
         }
 
         _inGameUi.gameObject.SetActive(true);
-
-        yield return null;
     }
 
-    private IEnumerator InitialiseCoin()
+    private void InitialiseCoin()
     {
         _activeCoin = Instantiate(Coin, GameContainer).gameObject;
         _activeCoin.GetComponent<SpriteRenderer>().color = _activeColor;
         _activeCoin.GetComponent<SpriteRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
         _activeCoin.GetComponent<Animation>().Play("SlideCoinToReadyPoint");
-        
-        yield return null;
     }
 
     private IEnumerator FinishTurn()
@@ -215,7 +195,7 @@ public class GameManager : MonoBehaviour
 
         if (!results.Any())
         {
-            yield return null;
+            yield break;
         }
 
         Collider2D closestCollider = null;
@@ -275,15 +255,13 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.25f);
 
         Destroy(_activeCoin);
-
-        yield return null;
     }
 
-    private IEnumerator CheckForWin()
+    private void CheckForWin()
     {
         if (_activeTile == null)
         {
-            yield break;
+            return;
         }
 
         IEnumerable<Tile> winningTiles;
@@ -301,17 +279,13 @@ public class GameManager : MonoBehaviour
 
             _gameOver = true;
         }
-
-        yield return null;
     }
 
-    private IEnumerator PrepareNextTurn()
+    private void PrepareNextTurn()
     {
         _activeColor = _activeColor == _red ? _yellow : _red;
         _activeCoin = null;
         _activeTile = null;
-
-        yield return null;
     }
 
     public void Restart()

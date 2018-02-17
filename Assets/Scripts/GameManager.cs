@@ -8,10 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
-{
-    private bool _initialised;
-    private bool _requiresReset;
-
+{   
     private Color _red;
     private Color _yellow;
     private Color _gridColor;
@@ -24,11 +21,13 @@ public class GameManager : MonoBehaviour
 
     private GameObject _grid;
 
-    public Transform GameContainer;
+    private int _winLength;
 
     // UI components
+
     public Canvas Canvas; // Set in inspector
 
+    public Transform GameContainer;
     private Transform _splashScreenUi;
     private Transform _inGameUi;
     private Transform _menuUi;
@@ -37,11 +36,15 @@ public class GameManager : MonoBehaviour
     public Transform Coin; // Set in inspector
     public Transform Grid; // Set in inspector
 
+    //States
+    private bool _initialised;
+    private bool _requiresReset;
     private bool _gameOver;
-    
 
-    // Use this for initialization
-	void Start ()
+    //Temporary setting changes
+    private int? _desiredWinLength;
+    
+    void Start ()
 	{
         StartCoroutine(Initialise());
 
@@ -54,8 +57,27 @@ public class GameManager : MonoBehaviour
 
         InitialiseColours();
 
+        InitialiseSettings();
+
         yield return StartCoroutine(Splash());
         
+    }
+
+    private void InitialiseSettings()
+    {
+        // Win length slider
+        var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
+        if (PlayerPrefs.HasKey("winlength"))
+        {
+            _winLength = PlayerPrefs.GetInt("winlength");
+            winLengthSlider.value = _winLength;
+        }
+        else
+        {
+            _winLength = 4;
+            PlayerPrefs.SetInt("winlength", _winLength);
+            winLengthSlider.value = _winLength;
+        }
     }
 
     private void FetchUiComponents()
@@ -118,7 +140,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Wait for coin to say that it's taken it's turn (user slides it)
-        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed)
+        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed && !_requiresReset)
         {
             yield return null;
         }
@@ -252,7 +274,7 @@ public class GameManager : MonoBehaviour
 
         _activeCoin.GetComponent<Animation>().Play("Shrink");
 
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSeconds(0.5f);
 
         Destroy(_activeCoin);
     }
@@ -266,7 +288,7 @@ public class GameManager : MonoBehaviour
 
         IEnumerable<Tile> winningTiles;
 
-        if (WinLogic.CheckWin(_board, _activeTile, out winningTiles))
+        if (WinLogic.CheckWin(_board, _activeTile, _winLength, out winningTiles))
         {
             // Do something with winning tiles. Highlight them or something
             foreach (var tile in winningTiles)
@@ -298,8 +320,36 @@ public class GameManager : MonoBehaviour
         Application.Quit();
     }
 
+    public void OpenMenu()
+    {
+        _menuUi.gameObject.SetActive(true);
+    }
+
+    public void CloseMenu()
+    {
+        _menuUi.gameObject.SetActive(false);
+
+        if (_desiredWinLength.HasValue)
+        {
+            _winLength = _desiredWinLength.Value;
+            PlayerPrefs.SetInt("winlength", _desiredWinLength.Value);
+            _requiresReset = true;
+            _desiredWinLength = null;
+        }
+    }
+
     public int PlayerMarker
     {
         get { return _activeColor == _red ? 1 : 2; }
+    }
+
+    public void ChangeWinLength(Slider slider)
+    {
+        var value = (int) slider.value;
+
+        if (value != _winLength)
+        {
+            _desiredWinLength = (int) slider.value;
+        }
     }
 }

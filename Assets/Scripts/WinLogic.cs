@@ -1,30 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Assets.Scripts
 {
-    //This class has a very naive and basic algorithm for checking if the is a run of 4 in a connect 4 grid. Don't judge me, it's Sunday night..
+    //This class has a very naive and basic algorithm for checking if the is a run of a given win length in a connect 4 style grid. Don't judge me, it's Sunday night..
 
     public class WinLogic
     {
-        public static bool CheckWin(Tile[,] grid, Tile changedTile, out IEnumerable<Tile> winningTiles)
+        public static bool CheckWin(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
-            if (CheckHorizontal(grid, changedTile, out winningTiles))
+            if (CheckHorizontal(grid, changedTile, winLength, out winningTiles))
             {
                 return true;
             }
 
-            if (CheckVertical(grid, changedTile, out winningTiles))
+            if (CheckVertical(grid, changedTile, winLength, out winningTiles))
             {
                 return true;
             }
 
-            if (CheckDiagonalDown(grid, changedTile, out winningTiles))
+            if (CheckDiagonalDown(grid, changedTile, winLength, out winningTiles))
             {
                 return true;
             }
 
-            if (CheckDiagonalUp(grid, changedTile, out winningTiles))
+            if (CheckDiagonalUp(grid, changedTile, winLength, out winningTiles))
             {
                 return true;
             }
@@ -33,32 +34,31 @@ namespace Assets.Scripts
             return false;
         }
 
-        private static bool CheckHorizontal(Tile[,] grid, Tile changedTile, out IEnumerable<Tile> winningTiles)
+        private static bool CheckHorizontal(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
             var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
             var col = changedTile.Col;
 
             // Find earliest index that could include this tile in a winning run of for along the row it's contained in
-            var beginIndex = changedTile.Row - 3;
+            var beginIndex = changedTile.Row - winLength - 1;
             if (beginIndex < 0)
             {
                 beginIndex = 0;
             }
 
-            // Loop from the earliest index up to the tiles actual index checking the runs of 4
-            for (var i = beginIndex; i <= changedTile.Row && i + 3 < grid.GetLength(0); i++)
+            // Loop from the earliest index up to the tiles actual index checking the runs of the win length
+            for (var i = beginIndex; i <= changedTile.Row && i + winLength - 1 < grid.GetLength(0); i++)
             {
-                // Check the 4 markers against what we expect
-                if (grid[i ,col].PlayerMarker == expectedMarker && grid[i + 1, col].PlayerMarker == expectedMarker && grid[i + 2, col].PlayerMarker == expectedMarker && grid[i + 3, col].PlayerMarker == expectedMarker)
+                // Collect tiles to check
+                var tilesToCheck = new List<Tile>();
+                for (var j = 0; j < winLength; j++)
                 {
-                    winningTiles = new[]
-                    {
-                        grid[i, col],
-                        grid[i + 1, col],
-                        grid[i + 2, col],
-                        grid[i + 3, col]
-                    };
+                    tilesToCheck.Add(grid[i + j, col]);
+                }
 
+                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                {
+                    winningTiles = tilesToCheck;
                     return true;
                 }
             }
@@ -67,32 +67,31 @@ namespace Assets.Scripts
             return false;
         }
 
-        private static bool CheckVertical(Tile[,] grid, Tile changedTile, out IEnumerable<Tile> winningTiles)
+        private static bool CheckVertical(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
             var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
             var row = changedTile.Row;
 
             // Find earliest index that could include this tile in a winning run of for along the column it's contained in
-            var beginIndex = changedTile.Col - 3;
+            var beginIndex = changedTile.Col - winLength - 1;
             if (beginIndex < 0)
             {
                 beginIndex = 0;
             }
 
-            // Loop from the earliest index up to the tiles actual index checking the runs of 4
-            for (var i = beginIndex; i <= changedTile.Col && i + 3 < grid.GetLength(1); i++)
+            // Loop from the earliest index up to the tiles actual index checking the runs of the win length
+            for (var i = beginIndex; i <= changedTile.Col && i + winLength - 1 < grid.GetLength(1); i++)
             {
-                // Check the 4 markers against what we expect
-                if (grid[row, i].PlayerMarker == expectedMarker && grid[row, i + 1].PlayerMarker == expectedMarker && grid[row, i + 2].PlayerMarker == expectedMarker && grid[row, i + 3].PlayerMarker == expectedMarker)
+                // Collect tiles to check
+                var tilesToCheck = new List<Tile>();
+                for (var j = 0; j < winLength; j++)
                 {
-                    winningTiles = new[]
-                    {
-                        grid[row, i],
-                        grid[row, i + 1],
-                        grid[row, i + 2],
-                        grid[row, i + 3]
-                    };
+                    tilesToCheck.Add(grid[row, i + j]);
+                }
 
+                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                {
+                    winningTiles = tilesToCheck;
                     return true;
                 }
             }
@@ -101,41 +100,35 @@ namespace Assets.Scripts
             return false;
         }
 
-        private static bool CheckDiagonalDown(Tile[,] grid, Tile changedTile, out IEnumerable<Tile> winningTiles)
+        private static bool CheckDiagonalDown(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
             var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
             
             // Find earliest indices that could include this tile in a winning run of for along the downward row it's contained in
-            var beginIndexRow = changedTile.Row - 3;
-            var beginIndexCol = changedTile.Col - 3;
+            var beginIndexRow = changedTile.Row - winLength - 1;
+            var beginIndexCol = changedTile.Col - winLength - 1;
 
             // If eaither index is below the bounds we need to push ourselves down the diagonal line back to the bounds
             if (beginIndexCol < 0 || beginIndexRow < 0)
             {
-                var furthest = Math.Min(beginIndexCol, beginIndexRow);
-                beginIndexRow += furthest * -1;
-                beginIndexCol += furthest * -1;
+                var farthest = Math.Min(beginIndexCol, beginIndexRow);
+                beginIndexRow += farthest * -1;
+                beginIndexCol += farthest * -1;
             }
 
-            // Loop from the earliest index up to the tiles actual index checking the runs of 4
-            for (var i = 0; beginIndexRow + i + 3 < grid.GetLength(0) && beginIndexCol +i + 3 < grid.GetLength(1); i++)
+            // Loop from the earliest index up to the tiles actual index checking the runs of the win length
+            for (var i = 0;  beginIndexRow + i + winLength - 1 < grid.GetLength(0) && beginIndexCol + i + winLength - 1 < grid.GetLength(1); i++)
             {
-                // Check the 4 markers against what we expect
-                if (
-                    grid[beginIndexRow + i,     beginIndexCol + i].PlayerMarker == expectedMarker && 
-                    grid[beginIndexRow + i + 1, beginIndexCol + i + 1].PlayerMarker == expectedMarker && 
-                    grid[beginIndexRow + i + 2, beginIndexCol + i + 2].PlayerMarker == expectedMarker && 
-                    grid[beginIndexRow + i + 3, beginIndexCol + i + 3].PlayerMarker == expectedMarker
-                )
+                // Collect tiles to check
+                var tilesToCheck = new List<Tile>();
+                for (var j = 0; j < winLength; j++)
                 {
-                    winningTiles = new[]
-                    {
-                        grid[beginIndexRow + i,     beginIndexCol + i],
-                        grid[beginIndexRow + i + 1, beginIndexCol + i + 1],
-                        grid[beginIndexRow + i + 2, beginIndexCol + i + 2],
-                        grid[beginIndexRow + i + 3, beginIndexCol + i + 3]
-                    };
+                    tilesToCheck.Add(grid[beginIndexRow + i + j, beginIndexCol + i + j]);
+                }
 
+                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                {
+                    winningTiles = tilesToCheck;
                     return true;
                 }
             }
@@ -144,43 +137,37 @@ namespace Assets.Scripts
             return false;
         }
 
-        private static bool CheckDiagonalUp(Tile[,] grid, Tile changedTile, out IEnumerable<Tile> winningTiles)
+        private static bool CheckDiagonalUp(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
             var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
 
             // Find earliest indices that could include this tile in a winning run of for along the downward row it's contained in
-            var beginIndexRow = changedTile.Row + 3;
-            var beginIndexCol = changedTile.Col - 3;
+            var beginIndexRow = changedTile.Row + winLength - 1;
+            var beginIndexCol = changedTile.Col - winLength + 1;
 
-            // If eaither index is outside the bounds we need to push ourselves up the diagonal line back to the bounds
+            // If either index is outside the bounds we need to push ourselves up the diagonal line back to the bounds
             if (beginIndexCol < 0 || beginIndexRow > grid.GetLength(0) - 1) // The row is pushed forwards. Find out if it's pushed past the last possible row index
             {
                 var rowOutDist = grid.GetLength(0) - 1 - beginIndexRow;
 
-                var furthest = Math.Min(beginIndexCol, rowOutDist);
-                beginIndexRow -= furthest * -1;
-                beginIndexCol += furthest * -1;
+                var farthest = Math.Min(beginIndexCol, rowOutDist);
+                beginIndexRow -= farthest * -1;
+                beginIndexCol += farthest * -1;
             }
             
-            // Loop from the earliest index up to the tiles actual index checking the runs of 4
-            for (var i = 0; beginIndexRow - i - 3 > -1 && beginIndexCol + i + 3 < grid.GetLength(1); i++)
+            // Loop from the earliest index up to the tiles actual index checking the runs of the win length
+            for (var i = 0; beginIndexRow - i - winLength - 1 >= 0 && beginIndexCol + i + winLength - 1 < grid.GetLength(1); i++)
             {
-                // Check the 4 markers against what we expect
-                if (
-                    grid[beginIndexRow - i, beginIndexCol + i].PlayerMarker == expectedMarker &&
-                    grid[beginIndexRow - i - 1, beginIndexCol + i + 1].PlayerMarker == expectedMarker &&
-                    grid[beginIndexRow - i - 2, beginIndexCol + i + 2].PlayerMarker == expectedMarker &&
-                    grid[beginIndexRow - i - 3, beginIndexCol + i + 3].PlayerMarker == expectedMarker
-                )
+                // Collect tiles to check
+                var tilesToCheck = new List<Tile>();
+                for (var j = 0; j < winLength; j++)
                 {
-                    winningTiles = new[]
-                    {
-                        grid[beginIndexRow - i,     beginIndexCol + i],
-                        grid[beginIndexRow - i - 1, beginIndexCol + i + 1],
-                        grid[beginIndexRow - i - 2, beginIndexCol + i + 2],
-                        grid[beginIndexRow - i - 3, beginIndexCol + i + 3]
-                    };
+                    tilesToCheck.Add(grid[beginIndexRow - i - j, beginIndexCol + i + j]);
+                }
 
+                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                {
+                    winningTiles = tilesToCheck;
                     return true;
                 }
             }

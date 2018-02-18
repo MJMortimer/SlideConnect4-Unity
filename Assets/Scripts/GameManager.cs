@@ -67,7 +67,6 @@ public class GameManager : MonoBehaviour
     {
         // Win length slider
         var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
-        var winLengthText = winLengthSlider.transform.Find("WinLengthText").GetComponent<Text>();
         if (PlayerPrefs.HasKey("winlength"))
         {
             _winLength = PlayerPrefs.GetInt("winlength");
@@ -269,7 +268,7 @@ public class GameManager : MonoBehaviour
 
             // Remember the change
             var tile = closestCollider.GetComponent<Tile>();
-            _board[tile.Row, tile.Col].PlayerMarker = PlayerMarker;
+            _board[tile.Row, tile.Col].Color = ColorUtility.ToHtmlStringRGBA(_activeColor);
             _activeTile = tile;
         }
 
@@ -346,11 +345,6 @@ public class GameManager : MonoBehaviour
             _requiresReset = true;
             _desiredWinLength = null;
         }
-    }
-
-    public int PlayerMarker
-    {
-        get { return _activeColor == _red ? 1 : 2; }
     }
 
     public void ChangeWinLength(Slider slider)

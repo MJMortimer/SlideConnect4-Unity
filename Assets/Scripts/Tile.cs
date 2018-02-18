@@ -7,6 +7,6 @@ namespace Assets.Scripts
         public int Row;
         public int Col;
 
-        public int PlayerMarker { get; set; }
+        public string Color { get; set; }
     }
 }

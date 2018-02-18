@@ -36,7 +36,7 @@ namespace Assets.Scripts
 
         private static bool CheckHorizontal(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
-            var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
+            var expectedColor = grid[changedTile.Row, changedTile.Col].Color;
             var col = changedTile.Col;
 
             // Find earliest index that could include this tile in a winning run of for along the row it's contained in
@@ -56,7 +56,7 @@ namespace Assets.Scripts
                     tilesToCheck.Add(grid[i + j, col]);
                 }
 
-                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                if (tilesToCheck.All(it => it.Color == expectedColor))
                 {
                     winningTiles = tilesToCheck;
                     return true;
@@ -69,7 +69,7 @@ namespace Assets.Scripts
 
         private static bool CheckVertical(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
-            var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
+            var expectedColor = grid[changedTile.Row, changedTile.Col].Color;
             var row = changedTile.Row;
 
             // Find earliest index that could include this tile in a winning run of for along the column it's contained in
@@ -89,7 +89,7 @@ namespace Assets.Scripts
                     tilesToCheck.Add(grid[row, i + j]);
                 }
 
-                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                if (tilesToCheck.All(it => it.Color == expectedColor))
                 {
                     winningTiles = tilesToCheck;
                     return true;
@@ -102,7 +102,7 @@ namespace Assets.Scripts
 
         private static bool CheckDiagonalDown(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
-            var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
+            var expectedColor = grid[changedTile.Row, changedTile.Col].Color;
             
             // Find earliest indices that could include this tile in a winning run of for along the downward row it's contained in
             var beginIndexRow = changedTile.Row - winLength - 1;
@@ -126,7 +126,7 @@ namespace Assets.Scripts
                     tilesToCheck.Add(grid[beginIndexRow + i + j, beginIndexCol + i + j]);
                 }
 
-                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                if (tilesToCheck.All(it => it.Color == expectedColor))
                 {
                     winningTiles = tilesToCheck;
                     return true;
@@ -139,7 +139,7 @@ namespace Assets.Scripts
 
         private static bool CheckDiagonalUp(Tile[,] grid, Tile changedTile, int winLength, out IEnumerable<Tile> winningTiles)
         {
-            var expectedMarker = grid[changedTile.Row, changedTile.Col].PlayerMarker;
+            var expectedColor = grid[changedTile.Row, changedTile.Col].Color;
 
             // Find earliest indices that could include this tile in a winning run of for along the downward row it's contained in
             var beginIndexRow = changedTile.Row + winLength - 1;
@@ -165,7 +165,7 @@ namespace Assets.Scripts
                     tilesToCheck.Add(grid[beginIndexRow - i - j, beginIndexCol + i + j]);
                 }
 
-                if (tilesToCheck.All(it => it.PlayerMarker == expectedMarker))
+                if (tilesToCheck.All(it => it.Color == expectedColor))
                 {
                     winningTiles = tilesToCheck;
                     return true;

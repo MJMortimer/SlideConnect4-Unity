@@ -239,11 +239,21 @@ public class GameManager : MonoBehaviour
         
         if (closestCollider != null)
         {
-            // Change colour of the tile
-
             var colisionObjectRender = closestCollider.gameObject.GetComponent<SpriteRenderer>();
+            var tile = closestCollider.GetComponent<Tile>();
+            var tileText = tile.transform.Find("tileText").GetComponent<TextMesh>();
 
-            if (!colisionObjectRender.color.Equals(_activeColor))
+            if (colisionObjectRender.color.Equals(_activeColor)) // Increase tile stack count
+            {
+                tile.Stack += 1;
+                tileText.text = tile.Stack.ToString();
+            }
+            else if (tile.Stack.HasValue && tile.Stack.Value > 1) // Decrease tile stack
+            {
+                tile.Stack -= 1;
+                tileText.text = tile.Stack.ToString();
+            }
+            else // Swap colour. Set stack count to 1
             {
                 //Alter the animation curve so that we fade from the color it is the color we want
                 var a = closestCollider.GetComponent<Animation>();
@@ -254,20 +264,18 @@ public class GameManager : MonoBehaviour
                 var bCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.b, existingClipLength, _activeColor.b);
                 var aCurve = AnimationCurve.EaseInOut(0, colisionObjectRender.color.a, existingClipLength, _activeColor.a);
 
-                //AnimationClip clip = new AnimationClip();
                 a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.r", rCurve);
                 a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.g", gCurve);
                 a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.b", bCurve);
                 a.clip.SetCurve("", typeof(SpriteRenderer), "m_Color.a", aCurve);
 
-                //a.RemoveClip("FadeIn");
-
-                //a.AddClip(clip, "test");
                 a.Play();
+
+                tile.Stack = 1;
+                tileText.text = tile.Stack.ToString();
             }
 
             // Remember the change
-            var tile = closestCollider.GetComponent<Tile>();
             _board[tile.Row, tile.Col].Color = ColorUtility.ToHtmlStringRGBA(_activeColor);
             _activeTile = tile;
         }

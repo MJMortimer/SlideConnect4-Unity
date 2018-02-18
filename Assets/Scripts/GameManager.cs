@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
     {
         // Win length slider
         var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
+        var winLengthText = winLengthSlider.transform.Find("WinLengthText").GetComponent<Text>();
         if (PlayerPrefs.HasKey("winlength"))
         {
             _winLength = PlayerPrefs.GetInt("winlength");
@@ -322,7 +323,16 @@ public class GameManager : MonoBehaviour
 
     public void OpenMenu()
     {
+        ChangeWinLengthText();
+
         _menuUi.gameObject.SetActive(true);
+    }
+
+    private void ChangeWinLengthText()
+    {
+        var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
+        var winLengthText = winLengthSlider.transform.Find("WinLengthText").GetComponent<Text>();
+        winLengthText.text = string.Format("LENGTH TO WIN: {0}", (int) winLengthSlider.value);
     }
 
     public void CloseMenu()
@@ -346,6 +356,8 @@ public class GameManager : MonoBehaviour
     public void ChangeWinLength(Slider slider)
     {
         var value = (int) slider.value;
+
+        ChangeWinLengthText();
 
         if (value != _winLength)
         {

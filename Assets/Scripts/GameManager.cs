@@ -8,9 +8,11 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
-{   
+{
     private Color _red;
     private Color _yellow;
+    private Color _pink;
+    private Color _blue;
     private Color _gridColor;
 
     private Tile[,] _board;
@@ -22,6 +24,7 @@ public class GameManager : MonoBehaviour
     private GameObject _grid;
 
     private int _winLength;
+    private int _playerCount;
 
     // UI components
 
@@ -36,20 +39,31 @@ public class GameManager : MonoBehaviour
     public Transform Coin; // Set in inspector
     public Transform Grid; // Set in inspector
 
-    //States
+    // Win length sprites
+    public Sprite ThreeWin;
+    public Sprite FourWin;
+    public Sprite FiveWin;
+
+    // Player count sprites
+    public Sprite TwoPlayer;
+    public Sprite ThreePlayer;
+    public Sprite FourPlayer;
+
+    // States
     private bool _initialised;
     private bool _requiresReset;
     private bool _gameOver;
 
     //Temporary setting changes
     private int? _desiredWinLength;
-    
-    void Start ()
-	{
+    private int? _desiredPlayerCount;
+
+    void Start()
+    {
         StartCoroutine(Initialise());
 
-	    StartCoroutine(GameLoop());
-	}
+        StartCoroutine(GameLoop());
+    }
 
     private IEnumerator Initialise()
     {
@@ -60,23 +74,67 @@ public class GameManager : MonoBehaviour
         InitialiseSettings();
 
         yield return StartCoroutine(Splash());
-        
+
     }
 
     private void InitialiseSettings()
     {
-        // Win length slider
-        var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
+        // Win length button
+        var winLengthButton = _menuUi.Find("WinLength/WinLengthButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("winlength"))
         {
             _winLength = PlayerPrefs.GetInt("winlength");
-            winLengthSlider.value = _winLength;
+            switch (_winLength)
+            {
+                case 3:
+                    winLengthButton.GetComponent<Image>().sprite = ThreeWin;
+                    break;
+                case 4:
+                    winLengthButton.GetComponent<Image>().sprite = FourWin;
+                    break;
+                case 5:
+                    winLengthButton.GetComponent<Image>().sprite = FiveWin;
+                    break;
+                default:
+                    PlayerPrefs.SetInt("winLength", 4);
+                    winLengthButton.GetComponent<Image>().sprite = FourWin;
+                    break;
+            }
         }
         else
         {
             _winLength = 4;
             PlayerPrefs.SetInt("winlength", _winLength);
-            winLengthSlider.value = _winLength;
+            winLengthButton.GetComponent<Image>().sprite = FourWin;
+        }
+
+        // Player count button
+        var playerCountButton = _menuUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>();
+        if (PlayerPrefs.HasKey("playerCount"))
+        {
+            _playerCount = PlayerPrefs.GetInt("playerCount");
+            switch (_playerCount)
+            {
+                case 2:
+                    playerCountButton.GetComponent<Image>().sprite = TwoPlayer;
+                    break;
+                case 3:
+                    playerCountButton.GetComponent<Image>().sprite = ThreePlayer;
+                    break;
+                case 4:
+                    playerCountButton.GetComponent<Image>().sprite = FourPlayer;
+                    break;
+                default:
+                    PlayerPrefs.SetInt("playerCount", 2);
+                    playerCountButton.GetComponent<Image>().sprite = TwoPlayer;
+                    break;
+            }
+        }
+        else
+        {
+            _playerCount = 2;
+            PlayerPrefs.SetInt("playerCount", _playerCount);
+            playerCountButton.GetComponent<Image>().sprite = TwoPlayer;
         }
     }
 
@@ -95,6 +153,8 @@ public class GameManager : MonoBehaviour
     {
         ColorUtility.TryParseHtmlString("#E88989FF", out _red);
         ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
+        ColorUtility.TryParseHtmlString("#D490D0FF", out _pink);
+        ColorUtility.TryParseHtmlString("#389DDAFF", out _blue);
         ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
 
         // Red always starts
@@ -236,7 +296,7 @@ public class GameManager : MonoBehaviour
                 closestDistance = distance;
             }
         }
-        
+
         if (closestCollider != null)
         {
             var colisionObjectRender = closestCollider.gameObject.GetComponent<SpriteRenderer>();
@@ -305,7 +365,7 @@ public class GameManager : MonoBehaviour
             }
 
             var winnerText = _inGameUi.Find("WinnerText").GetComponent<Text>();
-            winnerText.text = string.Format("<color=#{0}>WINNER</color>", _activeColor == _red ? ColorUtility.ToHtmlStringRGBA(_red) : ColorUtility.ToHtmlStringRGBA(_yellow));
+            winnerText.text = string.Format("<color=#{0}>WINNER</color>", ColorUtility.ToHtmlStringRGBA(_activeColor));
 
             _gameOver = true;
         }
@@ -313,9 +373,24 @@ public class GameManager : MonoBehaviour
 
     private void PrepareNextTurn()
     {
-        _activeColor = _activeColor == _red ? _yellow : _red;
+        _activeColor = NextColor();
         _activeCoin = null;
         _activeTile = null;
+    }
+
+    private Color NextColor()
+    {
+        var players = new List<Color> {_red, _yellow, _pink, _blue};
+
+        var activeIndex = players.IndexOf(_activeColor);
+        var next = activeIndex + 1;
+
+        if (next >= _playerCount)
+        {
+            next = 0;
+        }
+
+        return players[next];
     }
 
     public void Restart()
@@ -330,16 +405,7 @@ public class GameManager : MonoBehaviour
 
     public void OpenMenu()
     {
-        ChangeWinLengthText();
-
         _menuUi.gameObject.SetActive(true);
-    }
-
-    private void ChangeWinLengthText()
-    {
-        var winLengthSlider = _menuUi.Find("WinLengthSlider").GetComponent<Slider>();
-        var winLengthText = winLengthSlider.transform.Find("WinLengthText").GetComponent<Text>();
-        winLengthText.text = string.Format("LENGTH TO WIN: {0}", (int) winLengthSlider.value);
     }
 
     public void CloseMenu()
@@ -353,17 +419,67 @@ public class GameManager : MonoBehaviour
             _requiresReset = true;
             _desiredWinLength = null;
         }
+
+        if (_desiredPlayerCount.HasValue)
+        {
+            _playerCount = _desiredPlayerCount.Value;
+            PlayerPrefs.SetInt("playerCount", _desiredPlayerCount.Value);
+            _requiresReset = true;
+            _desiredPlayerCount = null;
+        }
     }
 
-    public void ChangeWinLength(Slider slider)
+    public void ChangeWinLength()
     {
-        var value = (int) slider.value;
+        var buttonImage = _menuUi.Find("WinLength/WinLengthButton").GetComponent<Button>().GetComponent<Image>();
+        var value = _desiredWinLength ?? _winLength;
 
-        ChangeWinLengthText();
-
-        if (value != _winLength)
+        switch (value)
         {
-            _desiredWinLength = (int) slider.value;
+            case 3:
+                _desiredWinLength = 4;
+                buttonImage.sprite = FourWin;
+                break;
+            case 4:
+                _desiredWinLength = 5;
+                buttonImage.sprite = FiveWin;
+                break;
+            case 5:
+                _desiredWinLength = 3;
+                buttonImage.sprite = ThreeWin;
+                break;
+        }
+
+        if (_desiredWinLength.HasValue && _desiredWinLength.Value == _winLength)
+        {
+            _desiredWinLength = null;
+        }
+    }
+
+    public void ChangePlayerCount()
+    {
+        var buttonImage = _menuUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>().GetComponent<Image>();
+        var value = _desiredPlayerCount ?? _playerCount;
+
+        switch (value)
+        {
+            case 2:
+                _desiredPlayerCount = 3;
+                buttonImage.sprite = ThreePlayer;
+                break;
+            case 3:
+                _desiredPlayerCount = 4;
+                buttonImage.sprite = FourPlayer;
+                break;
+            case 4:
+                _desiredPlayerCount = 2;
+                buttonImage.sprite = TwoPlayer;
+                break;
+        }
+
+        if (_desiredPlayerCount.HasValue && _desiredPlayerCount.Value == _playerCount)
+        {
+            _desiredPlayerCount = null;
         }
     }
 }

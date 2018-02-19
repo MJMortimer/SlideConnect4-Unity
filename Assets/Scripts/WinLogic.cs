@@ -156,7 +156,7 @@ namespace Assets.Scripts
             }
             
             // Loop from the earliest index up to the tiles actual index checking the runs of the win length
-            for (var i = 0; beginIndexRow - i - winLength - 1 >= 0 && beginIndexCol + i + winLength - 1 < grid.GetLength(1); i++)
+            for (var i = 0; beginIndexRow + 1 - i - winLength >= 0 && beginIndexCol + i + winLength - 1 < grid.GetLength(1); i++)
             {
                 // Collect tiles to check
                 var tilesToCheck = new List<Tile>();

@@ -303,7 +303,7 @@ public class GameManager : MonoBehaviour
         _activeCoin.GetComponent<SpriteRenderer>().color = _activeColor;
         _activeCoin.GetComponent<SpriteRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
-        _activeCoin.GetComponent<Animation>().Play("SlideCoinToReadyPoint");
+        _activeCoin.GetComponent<Animation>().Play("Grow");
     }
 
     private IEnumerator FinishTurn()

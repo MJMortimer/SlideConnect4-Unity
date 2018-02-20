@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Advertisements;
+using UnityEngine.Analytics;
 
 public class GameManager : MonoBehaviour
 {
@@ -65,6 +67,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        Advertisement.Initialize("1709613");
+        
         StartCoroutine(Initialise());
 
         StartCoroutine(GameLoop());
@@ -84,6 +88,7 @@ public class GameManager : MonoBehaviour
 
     private void InitialiseSettings()
     {
+        
         // Win length button
         var winLengthButton = _menuUi.Find("WinLength/WinLengthButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("winlength"))
@@ -251,6 +256,13 @@ public class GameManager : MonoBehaviour
         if (_gameOver)
         {
             yield return new WaitForSeconds(5);
+
+            if (Advertisement.IsReady())
+            {
+                Advertisement.Show();
+                yield return new WaitForSeconds(1);
+            }
+
             SceneManager.LoadScene(0);
         }
         else

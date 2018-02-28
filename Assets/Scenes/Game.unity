@@ -238,7 +238,7 @@ GameObject:
   m_Component:
   - component: {fileID: 46529282}
   m_Layer: 5
-  m_Name: SplashScreenUI
+  m_Name: TitleUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2413,7 +2413,7 @@ GameObject:
   - component: {fileID: 956252869}
   - component: {fileID: 956252870}
   m_Layer: 5
-  m_Name: SplashScreenText
+  m_Name: TitleText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2521,7 +2521,7 @@ GameObject:
   - component: {fileID: 991410499}
   - component: {fileID: 991410498}
   m_Layer: 5
-  m_Name: CloseMenuButton
+  m_Name: SettingsBackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2703,12 +2703,12 @@ GameObject:
   m_Component:
   - component: {fileID: 1023159824}
   m_Layer: 5
-  m_Name: MenuUI
+  m_Name: SettingsUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1023159824
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3034,7 +3034,7 @@ GameObject:
   - component: {fileID: 1240818346}
   - component: {fileID: 1240818345}
   m_Layer: 5
-  m_Name: CloseMenuText
+  m_Name: SettingsBackText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

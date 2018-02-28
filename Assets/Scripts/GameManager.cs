@@ -36,9 +36,9 @@ public class GameManager : MonoBehaviour
     public Canvas Canvas; // Set in inspector
 
     public Transform GameContainer;
-    private Transform _splashScreenUi;
+    private Transform _titleUi;
     private Transform _inGameUi;
-    private Transform _menuUi;
+    private Transform _settingsUi;
     private Transform _helpUi;
 
     // Prefabs
@@ -59,23 +59,18 @@ public class GameManager : MonoBehaviour
     private bool _initialised;
     private bool _requiresReset;
     private bool _gameOver;
-
-    //Temporary setting changes
-    private int? _desiredWinLength;
-    private int? _desiredPlayerCount;
-    private bool? _desiredStacking;
-    private bool? _desiredStealing;
+    private bool _stopGame;
 
     void Start()
     {
         Advertisement.Initialize("1709613");
-        
-        StartCoroutine(Initialise());
 
-        StartCoroutine(GameLoop());
+        Initialise();
+
+        StartCoroutine(PresentTitle());
     }
 
-    private IEnumerator Initialise()
+    private void Initialise()
     {
         FetchUiComponents();
 
@@ -83,15 +78,41 @@ public class GameManager : MonoBehaviour
 
         InitialiseSettings();
 
-        yield return StartCoroutine(Splash());
+        _initialised = true;
+    }
 
+    private void FetchUiComponents()
+    {
+        _titleUi = Canvas.transform.Find("TitleUI");
+        _inGameUi = Canvas.transform.Find("InGameUI");
+        _settingsUi = Canvas.transform.Find("SettingsUI");
+        _helpUi = Canvas.transform.Find("HelpUI");
+
+        _titleUi.gameObject.SetActive(false);
+        _inGameUi.gameObject.SetActive(false);
+        _settingsUi.gameObject.SetActive(false);
+        _helpUi.gameObject.SetActive(false);
+    }
+
+    private void InitialiseColours()
+    {
+        ColorUtility.TryParseHtmlString("#E88989FF", out _red);
+        ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
+        ColorUtility.TryParseHtmlString("#D490D0FF", out _pink);
+        ColorUtility.TryParseHtmlString("#389DDAFF", out _blue);
+        ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
+
+        _playerColours = new List<Color>{_red, _yellow, _pink, _blue};
+
+        // Red always starts
+        _activeColor = _red;
     }
 
     private void InitialiseSettings()
     {
         
         // Win length button
-        var winLengthButton = _menuUi.Find("WinLength/WinLengthButton").GetComponent<Button>();
+        var winLengthButton = _settingsUi.Find("WinLength/WinLengthButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("winlength"))
         {
             _winLength = PlayerPrefs.GetInt("winlength");
@@ -120,7 +141,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Player count button
-        var playerCountButton = _menuUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>();
+        var playerCountButton = _settingsUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("playerCount"))
         {
             _playerCount = PlayerPrefs.GetInt("playerCount");
@@ -149,7 +170,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Stacking button
-        var stackingButton = _menuUi.Find("Stacking/StackingButton").GetComponent<Button>();
+        var stackingButton = _settingsUi.Find("Stacking/StackingButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("stacking"))
         {
             _stacking = PlayerPrefs.GetInt("stacking") == 1;
@@ -165,7 +186,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Stealing button
-        var stealingButton = _menuUi.Find("Stealing/StealingButton").GetComponent<Button>();
+        var stealingButton = _settingsUi.Find("Stealing/StealingButton").GetComponent<Button>();
         if (PlayerPrefs.HasKey("stealing"))
         {
             _stealing = PlayerPrefs.GetInt("stealing") == 1;
@@ -181,56 +202,53 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void FetchUiComponents()
+    private IEnumerator PresentTitle()
     {
-        _splashScreenUi = Canvas.transform.Find("SplashScreenUI");
-        _inGameUi = Canvas.transform.Find("InGameUI");
-        _menuUi = Canvas.transform.Find("MenuUI");
-        _helpUi = Canvas.transform.Find("HelpUI");
+        var titleText = _titleUi.Find("TitleText");
 
-        _splashScreenUi.gameObject.SetActive(false);
-        _inGameUi.gameObject.SetActive(false);
-        _menuUi.gameObject.SetActive(false);
-        _helpUi.gameObject.SetActive(false);
-    }
-
-    private void InitialiseColours()
-    {
-        ColorUtility.TryParseHtmlString("#E88989FF", out _red);
-        ColorUtility.TryParseHtmlString("#E7DF77FF", out _yellow);
-        ColorUtility.TryParseHtmlString("#D490D0FF", out _pink);
-        ColorUtility.TryParseHtmlString("#389DDAFF", out _blue);
-        ColorUtility.TryParseHtmlString("#0000003D", out _gridColor);
-
-        _playerColours = new List<Color>{_red, _yellow, _pink, _blue};
-
-        // Red always starts
-        _activeColor = _red;
-    }
-
-    private IEnumerator Splash()
-    {
-        var splashScreenTextTransform = _splashScreenUi.Find("SplashScreenText");
-
-        var text = splashScreenTextTransform.GetComponent<Text>();
+        var text = titleText.GetComponent<Text>();
 
         text.text = string.Format("<color=#{0}>FL</color><color=#{1}>I</color><color=#{2}>CK</color>", ColorUtility.ToHtmlStringRGBA(_red), ColorUtility.ToHtmlStringRGBA(_gridColor), ColorUtility.ToHtmlStringRGBA(_yellow));
-        _splashScreenUi.gameObject.SetActive(true);
+        _titleUi.gameObject.SetActive(true);
 
-        yield return new WaitForSeconds(3);
+        yield return new WaitForSeconds(1.5f);
 
-        text.text = string.Empty;
-        _splashScreenUi.gameObject.SetActive(false);
+        text.GetComponent<Animation>().Play();
+        yield return new WaitForSeconds(1.5f);
+
+        var titleButtons = _titleUi.Find("TitleButtons");
+        titleButtons.gameObject.SetActive(true);
+    }
+
+    public void Play()
+    {
+        PrepareNewGame();
+
+        _titleUi.gameObject.SetActive(false);
+
+        StartCoroutine(GameLoop());
+    }
+
+    private void PrepareNewGame()
+    {
+        _activeColor = _red;
 
         _requiresReset = true;
 
-        _initialised = true;
+        _stopGame = false;
     }
 
     private IEnumerator GameLoop()
     {
-        while (!_initialised)
+        if (_stopGame)
         {
+            _stopGame = false;
+            yield break;
+        }
+
+        if (!_initialised)
+        {
+            Initialise();
             yield return null;
         }
 
@@ -247,7 +265,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Wait for coin to say that it's taken it's turn (user slides it)
-        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed && !_requiresReset)
+        while (!_activeCoin.GetComponent<CoinMovementManager>().Completed && !_requiresReset && !_stopGame)
         {
             yield return null;
         }
@@ -277,15 +295,19 @@ public class GameManager : MonoBehaviour
 
     private void InititialiseBoard()
     {
+        GameContainer.gameObject.SetActive(true);
+
         // Destroy previous in play objects
         if (_grid != null)
         {
             Destroy(_grid);
+            _grid = null;
         }
 
         if (_activeCoin != null)
         {
             Destroy(_activeCoin);
+            _activeCoin = null;
         }
 
         _board = new Tile[6, 7];
@@ -462,155 +484,115 @@ public class GameManager : MonoBehaviour
         Application.Quit();
     }
 
-    public void OpenMenu()
+    public void OpenSettings()
     {
-        _menuUi.gameObject.SetActive(true);
+        _titleUi.gameObject.SetActive(false);
+        _settingsUi.gameObject.SetActive(true);
     }
 
-    public void CloseMenu()
+    public void BackToMenu()
     {
-        _menuUi.gameObject.SetActive(false);
+        //Handle back from Game
+        _stopGame = true;
+        _inGameUi.gameObject.SetActive(false);
+        GameContainer.gameObject.SetActive(false);
 
-        if (_desiredWinLength.HasValue)
-        {
-            _winLength = _desiredWinLength.Value;
-            PlayerPrefs.SetInt("winlength", _desiredWinLength.Value);
-            _desiredWinLength = null;
-            _requiresReset = true;
-        }
+        //Handle back from Help or Settings
+        _helpUi.gameObject.SetActive(false);
+        _settingsUi.gameObject.SetActive(false);
 
-        if (_desiredPlayerCount.HasValue)
-        {
-            _playerCount = _desiredPlayerCount.Value;
-            PlayerPrefs.SetInt("playerCount", _desiredPlayerCount.Value);
-            _desiredPlayerCount = null;
-            _requiresReset = true;
-        }
-
-        if (_desiredStacking.HasValue)
-        {
-            _stacking = _desiredStacking.Value;
-            PlayerPrefs.SetInt("stacking", _desiredStacking.Value ? 1 : 0);
-            _desiredStacking = null;
-            _requiresReset = true;
-        }
-
-        if (_desiredStealing.HasValue)
-        {
-            _stealing = _desiredStealing.Value;
-            PlayerPrefs.SetInt("stealing", _desiredStealing.Value ? 1 : 0);
-            _desiredStealing = null;
-            _requiresReset = true;
-        }
+        _titleUi.gameObject.SetActive(true);
     }
 
     public void OpenHelp()
     {
-        _menuUi.gameObject.SetActive(false);
+        _titleUi.gameObject.SetActive(false);
         _helpUi.gameObject.SetActive(true);
-    }
-
-    public void CloseHelp()
-    {
-        _menuUi.gameObject.SetActive(true);
-        _helpUi.gameObject.SetActive(false);
     }
 
     public void ChangeWinLength()
     {
-        var buttonImage = _menuUi.Find("WinLength/WinLengthButton").GetComponent<Button>().GetComponent<Image>();
-        var value = _desiredWinLength ?? _winLength;
+        var buttonImage = _settingsUi.Find("WinLength/WinLengthButton").GetComponent<Button>().GetComponent<Image>();
+        var currentValue = _winLength;
 
-        switch (value)
+        switch (currentValue)
         {
             case 3:
-                _desiredWinLength = 4;
+                _winLength = 4;
                 buttonImage.sprite = FourWin;
                 break;
             case 4:
-                _desiredWinLength = 5;
+                _winLength = 5;
                 buttonImage.sprite = FiveWin;
                 break;
             case 5:
-                _desiredWinLength = 3;
+                _winLength = 3;
                 buttonImage.sprite = ThreeWin;
                 break;
         }
-
-        if (_desiredWinLength.HasValue && _desiredWinLength.Value == _winLength)
-        {
-            _desiredWinLength = null;
-        }
+        
+        PlayerPrefs.SetInt("winlength", _winLength);
     }
 
     public void ChangePlayerCount()
     {
-        var buttonImage = _menuUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>().GetComponent<Image>();
-        var value = _desiredPlayerCount ?? _playerCount;
+        var buttonImage = _settingsUi.Find("PlayerCount/PlayerCountButton").GetComponent<Button>().GetComponent<Image>();
+        var currentValue = _playerCount;
 
-        switch (value)
+        switch (currentValue)
         {
             case 2:
-                _desiredPlayerCount = 3;
+                _playerCount = 3;
                 buttonImage.sprite = ThreePlayer;
                 break;
             case 3:
-                _desiredPlayerCount = 4;
+                _playerCount = 4;
                 buttonImage.sprite = FourPlayer;
                 break;
             case 4:
-                _desiredPlayerCount = 2;
+                _playerCount = 2;
                 buttonImage.sprite = TwoPlayer;
                 break;
         }
 
-        if (_desiredPlayerCount.HasValue && _desiredPlayerCount.Value == _playerCount)
-        {
-            _desiredPlayerCount = null;
-        }
+        PlayerPrefs.SetInt("playerCount", _playerCount);
     }
 
     public void ChangeStacking()
     {
-        var buttonText = _menuUi.Find("Stacking/StackingButton/StackingButtonText").GetComponent<Text>();
-        var value = _desiredStacking ?? _stacking;
+        var buttonText = _settingsUi.Find("Stacking/StackingButton/StackingButtonText").GetComponent<Text>();
+        var currentValue = _stacking;
 
-        if (value)
+        if (currentValue)
         {
-            _desiredStacking = false;
+            _stacking = false;
             buttonText.text = string.Format("<color=#{0}>NAH..</color>", ColorUtility.ToHtmlStringRGBA(_yellow));
         }
         else
         {
-            _desiredStacking = true;
+            _stacking = true;
             buttonText.text = string.Format("<color=#{0}>YEAH!</color>", ColorUtility.ToHtmlStringRGBA(_red));
         }
-
-        if (_desiredStacking == _stacking)
-        {
-            _desiredStacking = null;
-        }
+        
+        PlayerPrefs.SetInt("stacking", _stacking ? 1 : 0);
     }
 
     public void ChangeStealing()
     {
-        var buttonText = _menuUi.Find("Stealing/StealingButton/StealingButtonText").GetComponent<Text>();
-        var value = _desiredStealing ?? _stealing;
+        var buttonText = _settingsUi.Find("Stealing/StealingButton/StealingButtonText").GetComponent<Text>();
+        var currentValue = _stealing;
 
-        if (value)
+        if (currentValue)
         {
-            _desiredStealing = false;
+            _stealing = false;
             buttonText.text = string.Format("<color=#{0}>NAH..</color>", ColorUtility.ToHtmlStringRGBA(_yellow));
         }
         else
         {
-            _desiredStealing = true;
+            _stealing = true;
             buttonText.text = string.Format("<color=#{0}>YEAH!</color>", ColorUtility.ToHtmlStringRGBA(_red));
         }
 
-        if (_desiredStealing == _stealing)
-        {
-            _desiredStealing = null;
-        }
+        PlayerPrefs.SetInt("stealing", _stealing ? 1 : 0);
     }
 }

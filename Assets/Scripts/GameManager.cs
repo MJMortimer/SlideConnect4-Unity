@@ -39,6 +39,7 @@ public class GameManager : MonoBehaviour
     private Transform _splashScreenUi;
     private Transform _inGameUi;
     private Transform _menuUi;
+    private Transform _helpUi;
 
     // Prefabs
     public Transform Coin; // Set in inspector
@@ -185,10 +186,12 @@ public class GameManager : MonoBehaviour
         _splashScreenUi = Canvas.transform.Find("SplashScreenUI");
         _inGameUi = Canvas.transform.Find("InGameUI");
         _menuUi = Canvas.transform.Find("MenuUI");
+        _helpUi = Canvas.transform.Find("HelpUI");
 
         _splashScreenUi.gameObject.SetActive(false);
         _inGameUi.gameObject.SetActive(false);
         _menuUi.gameObject.SetActive(false);
+        _helpUi.gameObject.SetActive(false);
     }
 
     private void InitialiseColours()
@@ -397,6 +400,7 @@ public class GameManager : MonoBehaviour
             _activeTile = tile;
         }
 
+        _activeCoin.GetComponent<CoinMovementManager>().ShrinkAudio.Play();
         _activeCoin.GetComponent<Animation>().Play("Shrink");
 
         yield return new WaitForSeconds(0.5f);
@@ -498,6 +502,18 @@ public class GameManager : MonoBehaviour
             _desiredStealing = null;
             _requiresReset = true;
         }
+    }
+
+    public void OpenHelp()
+    {
+        _menuUi.gameObject.SetActive(false);
+        _helpUi.gameObject.SetActive(true);
+    }
+
+    public void CloseHelp()
+    {
+        _menuUi.gameObject.SetActive(true);
+        _helpUi.gameObject.SetActive(false);
     }
 
     public void ChangeWinLength()

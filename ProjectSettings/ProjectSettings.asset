@@ -224,8 +224,8 @@ PlayerSettings:
   AndroidTargetDevice: 0
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: 
-  AndroidKeyaliasName: 
+  AndroidKeystoreName: C:/scratchpad/SlideConnect4-Unity/user.keystore
+  AndroidKeyaliasName: flick
   AndroidTVCompatibility: 1
   AndroidIsGame: 1
   AndroidEnableTango: 0

@@ -13,6 +13,14 @@ namespace Assets.Scripts
 
         public bool Completed;
 
+        public AudioSource GrowAudio;
+        public AudioSource ShrinkAudio;
+
+        void Start()
+        {
+            GrowAudio.Play();
+        }
+
         void Update()
         {
             if (_moving)

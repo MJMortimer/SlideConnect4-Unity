@@ -337,7 +337,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Flick the coin up onto the board with your finger
+  m_Text: Flick the coin onto the board. If you miss the board, your coin is wasted
 --- !u!222 &29179482
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2115,7 +2115,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Numbers on tiles show many tiles are stacked on top of each other
+  m_Text: Numbers on tiles show how many tiles are stacked on top of each other
 --- !u!222 &409735106
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2531,7 +2531,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Decreasing an opponents stacks makes it easier to stop them from winning
+  m_Text: Decreasing an opponent's stacks makes it easier to stop them from winning
 --- !u!222 &579214790
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2905,7 +2905,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Numbers on tiles show many tiles are stacked on top of each other
+  m_Text: Numbers on tiles show how many tiles are stacked on top of each other
 --- !u!222 &655817798
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3372,7 +3372,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: You'll probably find that yoru opponent will try to steal it straight back!
+  m_Text: You'll probably find that your opponent will try to steal it straight back!
 --- !u!222 &724962490
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5590,7 +5590,8 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Change this setting to change the connection length required to win
+  m_Text: Change this setting to choose the number of connected tiles required to
+    win
 --- !u!222 &1417980716
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5664,7 +5665,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Land a coin on one of your opponents tiles to steal take it for yourself
+  m_Text: Land a coin on one of your opponent's tiles to take it for yourself
 --- !u!222 &1433514805
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6534,7 +6535,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1756425444
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7416,7 +7417,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Change this setting to change the connection length required to win
+  m_Text: Change this setting to choose the number of players in the game
 --- !u!222 &2017420117
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7910,7 +7911,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Land a coin on one of your opponents tiles to decrease it's stack
+  m_Text: Land a coin on one of your opponent's tiles to decrease it's stack
 --- !u!222 &2070562774
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8073,7 +8074,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Stealing an opponents tile is the only effective way to prevent them from
+  m_Text: Stealing an opponent's tile is the only effective way to prevent them from
     winning
 --- !u!222 &2131621628
 CanvasRenderer:

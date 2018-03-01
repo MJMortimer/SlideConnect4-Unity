@@ -61,6 +61,14 @@ public class GameManager : MonoBehaviour
     private bool _gameOver;
     private bool _stopGame;
 
+    // Help screens
+    public GameObject[] HelpScreens;
+    public Button PrevHelpButton;
+    public Button NextHelpButton;
+
+    private int _helpScreenIndex;
+
+
     void Start()
     {
         Advertisement.Initialize("1709613");
@@ -506,8 +514,39 @@ public class GameManager : MonoBehaviour
 
     public void OpenHelp()
     {
+        _helpScreenIndex = 0;
+        HelpScreens[_helpScreenIndex].SetActive(true);
+        for (var i = 1; i < HelpScreens.Length ; i++)
+        {
+            HelpScreens[i].SetActive(false);
+        }
+        PrevHelpButton.gameObject.SetActive(false);
+        NextHelpButton.gameObject.SetActive(true);
+
         _titleUi.gameObject.SetActive(false);
         _helpUi.gameObject.SetActive(true);
+    }
+
+    public void PrevHelp()
+    {
+        HelpScreens[_helpScreenIndex--].SetActive(false);
+        HelpScreens[_helpScreenIndex].SetActive(true);
+        NextHelpButton.gameObject.SetActive(true);
+        if (_helpScreenIndex == 0)
+        {
+            PrevHelpButton.gameObject.SetActive(false);
+        }
+    }
+
+    public void NextHelp()
+    {
+        HelpScreens[_helpScreenIndex++].SetActive(false);
+        HelpScreens[_helpScreenIndex].SetActive(true);
+        PrevHelpButton.gameObject.SetActive(true);
+        if (_helpScreenIndex == HelpScreens.Length - 1)
+        {
+            NextHelpButton.gameObject.SetActive(false);
+        }
     }
 
     public void ChangeWinLength()
